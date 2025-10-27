@@ -1,4 +1,4 @@
-package eu.learnpad.verification.rest.impl;
+package com.example.application.BEBoP.src.main.java.eu.learnpad.verification.rest.impl;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

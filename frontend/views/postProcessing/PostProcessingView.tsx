@@ -40,7 +40,6 @@ export default function PostProcessingView() {
         'G21',        'G22',        'G24',        'G26',        'G28',        'G29',        'G30',        'G31',
         'G32',        'G33',        'G34',        'G35',        'G36',        'G37',        'G38',        'G39',
         'G42',        'G44',        'G45',        'G46',        'G47',        'G48',        'G49',        'G50'    ];
-    const [activeButton, setActiveButton] = React.useState(null);
     const descriptions = [
         { title: 'Minimize model size', description: 'The designer should create models which comply with the BPMN standard. Once the\n' +
                 'process logic has been defined, the designer should validate a model ensuring that the\n' +
@@ -176,6 +175,8 @@ export default function PostProcessingView() {
                 'might make the diagrams reading a challenge. The designer should not model further\n' +
                 'properties with different colours, in order to make diagrams recognisable.' },
     ];
+    const [activeButton, setActiveButton] = React.useState(null);
+    const [sortedGuidelines, setSortedGuidelines] = useState<any[]>([]);
     const location = useLocation()
     const filteringArray: string[] = [];
     const {data} = location.state
@@ -206,7 +207,51 @@ export default function PostProcessingView() {
             data: data,
         })
             .then((response) => {
+                const filesData = response.data;
                 setFilesInfo(response.data);
+
+                const priorityOrder = [
+                    'G19', 'G20', 'G16', 'G30', 'G21', 'G18', 'G12', 'G34', 'G2', 'G44', 'G31', 'G3', 'G22', 'G10', 'G11', 'G14','G24', 'G17', 'G29', 'G26', 'G38', 'G50', 
+                    'G9', 'G49', 'G45', 'G13', 'G33', 'G15', 'G39', 'G47', 'G28', 'G36', 'G42', 'G46', 'G32', 'G35', 'G8', 'G7', 'G37', 'G48'
+                ]
+                const validProcessModels = filesData.filter((file: any) => file.modelType === "Process Collaboration" && file.isValid);
+                const adherenceMap = new Map<string, number>();
+
+                g.forEach(guidelineId => {
+                    let respectedCount = 0;
+                    validProcessModels.forEach((file: any) => {
+                        if (file.guidelineMap[guidelineId]) {
+                            respectedCount++;
+                        }
+                    });
+                    const percentage = validProcessModels.length > 0 ? (respectedCount / validProcessModels.length) * 100 : 100;
+                    adherenceMap.set(guidelineId, percentage);
+                });
+                const combinedGuidelines = g.map((guidelineId, index) => ({
+                    id: guidelineId,
+                    title: descriptions[index].title,
+                    description: descriptions[index].description,
+                    adherence: adherenceMap.get(guidelineId) || 100,
+                }));
+
+            
+                const sorted = combinedGuidelines.sort((a, b) => {
+                   
+                    if (a.adherence < 100 && b.adherence === 100) return -1;
+                    if (a.adherence === 100 && b.adherence < 100) return 1;
+
+                    
+                    const indexA = priorityOrder.indexOf(a.id);
+                    const indexB = priorityOrder.indexOf(b.id);
+
+                    if (indexA === -1) return 1; 
+                    if (indexB === -1) return -1;
+
+                    return indexA - indexB;
+                });
+
+                setSortedGuidelines(sorted);
+
                 loader.hide();
 
                 // Esegui le chiamate API aggiuntive qui
@@ -233,6 +278,7 @@ export default function PostProcessingView() {
             .catch((error) => {
                 console.log("Errore nel caricamento dei dati", error);
             });
+
     }, []);
 
 
@@ -1408,10 +1454,10 @@ export default function PostProcessingView() {
                                         <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices List</a> <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}} title={"This is the list of forty good modeling practies"}/>
                                             <div style={{display:"flex", flexDirection: "column"}}>
                                                 <div style={{ marginTop: "10px", display: "flex", flexDirection: "column" }}>
-                                                    {g.map((item, index) => (
-                                                        <div key={index} style={{ marginBottom: "2px" }}>
+                                                   {sortedGuidelines.map((guideline, index) => (
+                                                        <div key={guideline.id} style={{ marginBottom: "2px" }}>
                                                             <button
-                                                                key={index}
+                                                                key={guideline.id}
                                                                 onClick={() => handleClick(index)}
                                                                 style={{
                                                                     marginRight: "10px",
@@ -1421,20 +1467,21 @@ export default function PostProcessingView() {
                                                                     color: "#10ad73",
                                                                     borderRadius: "3px",
                                                                 }}
-                                                                className={selectedItemIndex === index && activeButton === index ? "active" : ""}
+                                                                // Adiciona a classe 'unmet-guideline' se a aderência não for 100%
+                                                                className={`${activeButton === index ? "active" : ''} ${guideline.adherence < 100 ? 'unmet-guideline' : ''}`}
                                                             >
-                                                                {item} - <span style={{ fontWeight: "bold" }}>{descriptions[index].title}</span>
+                                                                {guideline.id} - <span style={{ fontWeight: "bold" }}>{guideline.title}</span>
                                                             </button>
                                                             {activeButton === index && (
                                                                 <div style={{ marginTop: "5px", marginLeft: "20px", color: "black" }}>
-                                                          <span
-                                                              style={{
-                                                                  color: `rgb(${255 - radarChartData.datasets[0].data[index] * 2.55}, ${radarChartData.datasets[0].data[index] * 2.55}, 0)`,
-                                                                  fontWeight: "bold",
-                                                              }}
-                                                          >
-                                                            Adherence: {radarChartData.datasets[0].data[index].toFixed(2)}%
-                                                          </span>{" "}- {descriptions[index].description}
+                                                                    <span
+                                                                        style={{
+                                                                            color: `rgb(${255 - guideline.adherence * 2.55}, ${guideline.adherence * 2.55}, 0)`,
+                                                                            fontWeight: "bold",
+                                                                        }}
+                                                                    >
+                                                                        Adherence: {guideline.adherence.toFixed(2)}%
+                                                                    </span>{" "}- {guideline.description}
                                                                 </div>
                                                             )}
                                                         </div>

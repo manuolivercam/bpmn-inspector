@@ -104,7 +104,49 @@ public class GuidelinesFactory {
 	private void init() {
 		guidelines = new ArrayList<abstractGuideline>();
 		setDefinitionID(diagram.getId());
-		// ** General
+		
+		guidelines.add(new BalanceGateways(diagram, l)); // 1
+		guidelines.add(new UsageMeaningfulGateways(diagram, l)); // 2
+		guidelines.add(new explicitGateways(diagram, l)); // 3
+		guidelines.add(new LabelingActivities(diagram, l)); // 4
+		guidelines.add(new UsageInclusiveORGateways(diagram, l)); // 5
+		guidelines.add(new SplitAndJoinFlows(diagram, l)); // 6
+		guidelines.add(new ExplicitStartEndEvents(diagram, l)); // 7
+		guidelines.add(new LabelingXORGateway(diagram, l)); // 8
+		guidelines.add(new MinimizeModelSize(diagram, l)); // 9
+		guidelines.add(new AvoidOverlapping(diagram, l)); // 10
+		guidelines.add(new LabelingEvents(diagram, l)); // 11
+		guidelines.add(new ApplyHierarchicalStructure(diagram, l)); // 12
+		guidelines.add(new UsageDefaultFlows(diagram, l)); // 13
+		guidelines.add(new ConsistentUsagePools(diagram, l)); // 14
+		guidelines.add(new ConsistentUsageLanes(diagram, l)); // 15
+		guidelines.add(new ConsistentUsageEndEvents(diagram, l)); // 16
+		guidelines.add(new UsageMessageFlows(diagram, l)); // 17
+		guidelines.add(new ExclusiveGatewayMarking(diagram, l)); // 18
+		guidelines.add(new LabelingLanes(diagram, l)); // 19
+		guidelines.add(new DocumentMinorDetails(diagram, l)); // 20
+		guidelines.add(new LabelingSynchronisedEndSplit(diagram, l)); // 21
+		guidelines.add(new StandardFormat(diagram, l)); // 22
+		guidelines.add(new MinimizeGatewayHeterogeneity(diagram, l)); // 23
+		guidelines.add(new AssociateDataObject(diagram, l)); // 24
+		guidelines.add(new LinearSequenceFlows(diagram, l)); // 25
+		guidelines.add(new ConsistentUsageStartEvents(diagram, l)); // 26
+		guidelines.add(new LabelingMessageEvent(diagram, l)); // 27
+		guidelines.add(new RestrictUsageTerminateEndEvent(diagram, l)); // 28
+		guidelines.add(new LoopMarkerAnnotation(diagram, l)); // 29
+		guidelines.add(new ProcessOrientation(diagram, l)); // 30
+		guidelines.add(new LabelingPools(diagram, l)); // 31
+		guidelines.add(new LabelingConvergingGateways(diagram, l)); // 32
+		guidelines.add(new ScopeAttachedEvents(diagram, l)); // 33
+		guidelines.add(new LinearMessageFlows(diagram, l)); // 34
+		guidelines.add(new LabelingStartandEndEvents(diagram, l)); // 35
+		guidelines.add(new LabelingANDGateways(diagram, l)); // 36
+		guidelines.add(new ActivityDescription(diagram, l)); // 37
+		guidelines.add(new ModelLoops(diagram, l)); // 38
+		guidelines.add(new LabelingDataObject(diagram, l)); // 39
+		guidelines.add(new OrganizeArtifact(diagram, l)); // 40
+
+		/*
 		guidelines.add(new MinimizeModelSize(diagram, l));
 		guidelines.add(new ApplyHierarchicalStructure(diagram, l));
 		//guidelines.add(new MinimizeConcurrency(diagram, l));
@@ -150,6 +192,7 @@ public class GuidelinesFactory {
 		guidelines.add(new OrganizeArtifact(diagram, l));
 		guidelines.add(new AssociateDataObject(diagram, l));
 		guidelines.add(new StandardFormat(diagram, l));
+		*/
 		threadPool = new LinkedBlockingQueue<Runnable>();
 		/*
 		 * setProcessID(explicitSEevent.getProcessID());

@@ -226,6 +226,9 @@ export default function PostProcessingView() {
                     });
                     const percentage = validProcessModels.length > 0 ? (respectedCount / validProcessModels.length) * 100 : 100;
                     adherenceMap.set(guidelineId, percentage);
+                    console.log(
+                        `Diretriz: ${guidelineId}, Respeitada em: ${respectedCount} de ${validProcessModels.length}, Porcentagem: ${percentage.toFixed(2)}%`
+                    );
                 });
                 const combinedGuidelines = g.map((guidelineId, index) => ({
                     id: guidelineId,

@@ -61,7 +61,9 @@ public class UploadController {
     private List<String> validModelFiles = new ArrayList<>();
     private int apiCallCount = 0;
     @PostMapping("/files")
-    public List<fileInfo> getFiles(@RequestBody String[] data) throws IOException, InterruptedException {
+    public List<fileInfo> getFiles(@RequestBody(required = false) String[] data) throws IOException, InterruptedException {
+
+        final String[] effectiveData = (data == null) ? new String[0] : data;
 
         List<fileInfo> fileInfos = new ArrayList<>();
         List<fileInfo> fileInfosBackup = new ArrayList<>();
@@ -78,7 +80,7 @@ public class UploadController {
             try {
                 byte[] fileContent = Files.readAllBytes(file.toPath());
                 isEnglish = detectLanguage(file);
-                validationResult = validateFile(data,file,fileInfos);
+                validationResult = validateFile(effectiveData,file,fileInfos);
 
                 isValid = Objects.equals(validationResult, "");
 
@@ -106,16 +108,16 @@ public class UploadController {
 
         if (apiCallCount > fileInfos.size()+1) {
             try {
-                getFilteredFiles(data, fileInfos);
-                evaluateCombined(data, fileInfos);
-                evaluateGuidelines(data, fileInfos);
+                getFilteredFiles(effectiveData, fileInfos);
+                evaluateCombined(effectiveData, fileInfos);
+                evaluateGuidelines(effectiveData, fileInfos);
             } catch (IOException | XPathExpressionException | SAXException | ParserConfigurationException e) {
                 throw new RuntimeException(e);
             }
         }
         List<fileInfo> newFileInfoFiltered = new ArrayList<>();
         for (fileInfo fileInfo : fileInfos) {
-            if(data.length==0){
+            if(effectiveData.length==0){
                 fileInfosBackup = fileInfos;
                 return fileInfosBackup;
             }

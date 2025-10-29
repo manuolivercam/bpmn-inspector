@@ -234,25 +234,30 @@ export default function PostProcessingView() {
                     id: guidelineId,
                     title: descriptions[index].title,
                     description: descriptions[index].description,
-                    adherence: adherenceMap.get(guidelineId) || 100,
+                    adherence: adherenceMap.get(guidelineId) ?? 100,
                 }));
 
-            
+                console.log("Diretrizes antes de ordenar:", combinedGuidelines);
+
                 const sorted = combinedGuidelines.sort((a, b) => {
-                   
-                    if (a.adherence < 100 && b.adherence === 100) return -1;
-                    if (a.adherence === 100 && b.adherence < 100) return 1;
+       
+                if (a.adherence < b.adherence) {
+                    return -1;
+                }
+                if (a.adherence > b.adherence) {
+                    return 1;
+                }
+                const indexA = priorityOrder.indexOf(a.id);
+                const indexB = priorityOrder.indexOf(b.id);
 
-                    
-                    const indexA = priorityOrder.indexOf(a.id);
-                    const indexB = priorityOrder.indexOf(b.id);
+  
+                if (indexA === -1 && indexB > -1) return 1;
+                if (indexB === -1 && indexA > -1) return -1;
 
-                    if (indexA === -1) return 1; 
-                    if (indexB === -1) return -1;
-
-                    return indexA - indexB;
+                return indexA - indexB;
                 });
 
+                console.log("Diretrizes depois de ordenar:", sorted);
                 setSortedGuidelines(sorted);
 
                 loader.hide();

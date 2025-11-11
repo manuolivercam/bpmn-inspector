@@ -215,7 +215,8 @@ export default function PostProcessingView() {
                     'G9', 'G49', 'G45', 'G13', 'G33', 'G15', 'G39', 'G47', 'G28', 'G36', 'G42', 'G46', 'G32', 'G35', 'G8', 'G7', 'G37', 'G48'
                 ]
                 const validProcessModels = filesData.filter((file: any) => file.modelType === "Process Collaboration" && file.isValid);
-                const adherenceMap = new Map<string, number>();
+        
+                const adherenceMap = new Map<string, boolean>(); // Alterado para boolean
 
                 g.forEach(guidelineId => {
                     let respectedCount = 0;
@@ -224,33 +225,25 @@ export default function PostProcessingView() {
                             respectedCount++;
                         }
                     });
-                    const percentage = validProcessModels.length > 0 ? (respectedCount / validProcessModels.length) * 100 : 100;
-                    adherenceMap.set(guidelineId, percentage);
-                    console.log(
-                        `Diretriz: ${guidelineId}, Respeitada em: ${respectedCount} de ${validProcessModels.length}, Porcentagem: ${percentage.toFixed(2)}%`
-                    );
+
+                    const isAdheredTo = validProcessModels.length > 0 ? respectedCount === validProcessModels.length : true;
+                    adherenceMap.set(guidelineId, isAdheredTo);
                 });
+
                 const combinedGuidelines = g.map((guidelineId, index) => ({
                     id: guidelineId,
                     title: descriptions[index].title,
                     description: descriptions[index].description,
-                    adherence: adherenceMap.get(guidelineId) ?? 100,
+                    adherence: adherenceMap.get(guidelineId) ?? true, // Agora é um booleano
                 }));
 
                 console.log("Diretrizes antes de ordenar:", combinedGuidelines);
 
                 const sorted = combinedGuidelines.sort((a, b) => {
        
-                if (a.adherence < b.adherence) {
-                    return -1;
-                }
-                if (a.adherence > b.adherence) {
-                    return 1;
-                }
                 const indexA = priorityOrder.indexOf(a.id);
                 const indexB = priorityOrder.indexOf(b.id);
 
-  
                 if (indexA === -1 && indexB > -1) return 1;
                 if (indexB === -1 && indexA > -1) return -1;
 
@@ -1386,7 +1379,8 @@ export default function PostProcessingView() {
                             <>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>
                                     <div style={{display: "flex", flexDirection: "row"}}>
-                                        <div style={{width: "60%", marginRight:"10px", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
+                                    
+                                        {/* <div style={{width: "60%", marginRight:"10px", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
                                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap" }}>
                                                 <a style={{ fontSize: '25px', color: 'black', fontWeight: "bold" }}>Good Modeling Practices Adherence</a>
                                                 <CiCircleQuestion style={{ fontSize: '18px', marginBottom: "3%", cursor: "help" }} title={"This is a graph of the adherence's percentage of each good modeling practices"} />
@@ -1423,47 +1417,85 @@ export default function PostProcessingView() {
                                                     </tbody>
                                                 </table>
 
-                                                <table>
-                                                    <thead>
+                                              <table>
+                                                <thead>
                                                     <tr>
                                                         <th>Most Violated Good Modeling Practices</th>
                                                     </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    {radarChartData.datasets[0].data
-                                                        .map((percentage, index) => ({ percentage, index }))
-                                                        .filter(({ percentage }) => percentage < 100)
-                                                        .sort((a, b) => a.percentage - b.percentage)
-                                                        .slice(0, 10)
-                                                        .map(({ percentage, index }) => (
-                                                            <tr key={index} style={{ fontSize: "12px" }}>
-                                                                <td>
-                                                                    {`${g[index]} - `}
-                                                                    <span style={{ fontWeight: "bold" }}>{descriptions[index].title}</span>
-                                                                    <span style={{ color: `rgb(${255 - percentage * 2.55}, ${percentage * 2.55}, 0)`, fontWeight: "bold", marginLeft: "10px" }}>
-                                                                      {percentage.toFixed(2)}%
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        // Adicione estes logs para depuração
+                                                        const allPercentages = radarChartData.datasets[0].data;
+                                                        console.log("--- DEBUG INICIADO ---");
+                                                        console.log("Passo 1: Todas as porcentagens de aderência calculadas:", allPercentages);
 
-                                                    {[...Array(Math.max(10 - radarChartData.datasets[0].data.filter(percentage => percentage < 100).length, 0))].map((_, index) => (
-                                                        <tr key={index + 10} style={{ fontSize: "12px" }}>
-                                                            <td>
-                                                                {"-"}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                        const violatedGuidelines = allPercentages
+                                                            .map((percentage, index) => ({ percentage, index, guideline: g[index] }))
+                                                            .filter(({ percentage }) => percentage < 100);
+                                                        console.log("Passo 2: Diretrizes com aderência < 100% (DEPOIS de filtrar):", violatedGuidelines);
+
+                                                        const sortedViolated = violatedGuidelines.sort((a, b) => a.percentage - b.percentage);
+                                                        console.log("Passo 3: Diretrizes violadas ordenadas (da menor para a maior %):", sortedViolated);
+
+                                                        const finalData = sortedViolated.slice(0, 10);
+                                                        console.log("Passo 4: Dados finais a serem exibidos (Top 10 das violadas):", finalData);
+                                                        console.log("--- DEBUG FINALIZADO ---");
+
+
+                                                        // Código original para renderizar a tabela
+                                                        const rows = finalData.map(({ percentage, index }) => (
+                                                                <tr key={index} style={{ fontSize: "12px" }}>
+                                                                    <td>
+                                                                        {`${g[index]} - `}
+                                                                        <span style={{ fontWeight: "bold" }}>{descriptions[index].title}</span>
+                                                                        <span style={{ color: `rgb(${255 - percentage * 2.55}, ${percentage * 2.55}, 0)`, fontWeight: "bold", marginLeft: "10px" }}>
+                                                                        {percentage.toFixed(2)}%
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            ));
+
+                                                        // Adiciona as linhas vazias para completar até 10
+                                                        while (rows.length < 10) {
+                                                            rows.push(
+                                                                <tr key={rows.length + 10} style={{ fontSize: "12px" }}>
+                                                                    <td>-</td>
+                                                                </tr>
+                                                            );
+                                                        }
+
+                                                        return rows;
+                                                    })()}
+                                                </tbody>
+                                            </table>
                                         </div>
-                                        <div style={{width: "40%", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
-                                        <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices List</a> <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}} title={"This is the list of forty good modeling practies"}/>
-                                            <div style={{display:"flex", flexDirection: "column"}}>
-                                                <div style={{ marginTop: "10px", display: "flex", flexDirection: "column" }}>
-                                                   {sortedGuidelines.map((guideline, index) => (
-                                                        <div key={guideline.id} style={{ marginBottom: "2px" }}>
+                                        </div> */}
+                                        
+                                  
+                                        <div style={{
+                                            width: "100%", // Alterado de 40% para 100%
+                                            paddingRight: "10px",
+                                            border: "2px solid #d8d8d8",
+                                            background: "white",
+                                            padding: "5px 15px 15px 15px",
+                                            borderRadius: "12px 12px 12px 12px",
+                                            lineHeight: "1.5714285714285714"
+                                        }}>
+                                            <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices List</a>
+                                            <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}}
+                                                            title={"This is the list of forty good modeling practies"}/>
+                                            <div style={{display: "flex", flexDirection: "column"}}>
+                                                <div style={{
+                                                    marginTop: "10px",
+                                                    columnCount: 2, // <-- Adicionado para criar 2 colunas
+                                                    columnGap: "20px"  // <-- Adicionado para espaçamento
+                                                }}>
+                                                    {sortedGuidelines.map((guideline, index) => (
+                                                        <div key={guideline.id} style={{
+                                                            marginBottom: "2px",
+                                                            breakInside: "avoid-column" // <-- Adicionado para evitar quebra de item
+                                                        }}>
                                                             <button
                                                                 key={guideline.id}
                                                                 onClick={() => handleClick(index)}
@@ -1474,30 +1506,37 @@ export default function PostProcessingView() {
                                                                     backgroundColor: "rgba(250, 250, 250, 0.8)",
                                                                     color: "#10ad73",
                                                                     borderRadius: "3px",
+                                                                    width: "100%", // <-- Adicionado para preencher a coluna
+                                                                    textAlign: "left" // <-- Adicionado para alinhar o texto
                                                                 }}
-                                                                // Adiciona a classe 'unmet-guideline' se a aderência não for 100%
-                                                                className={`${activeButton === index ? "active" : ''} ${guideline.adherence < 100 ? 'unmet-guideline' : ''}`}
+                                                                className={`${activeButton === index ? "active" : ''} ${!guideline.adherence ? 'unmet-guideline' : ''}`}
                                                             >
-                                                                {guideline.id} - <span style={{ fontWeight: "bold" }}>{guideline.title}</span>
+                                                                {guideline.id} - <span style={{fontWeight: "bold"}}>{guideline.title}</span>
                                                             </button>
                                                             {activeButton === index && (
-                                                                <div style={{ marginTop: "5px", marginLeft: "20px", color: "black" }}>
+                                                                <div style={{marginTop: "5px", marginLeft: "20px", color: "black"}}>
+                                                                    
+                                                                    {/* --- Início da Alteração de Aderência --- */}
                                                                     <span
                                                                         style={{
-                                                                            color: `rgb(${255 - guideline.adherence * 2.55}, ${guideline.adherence * 2.55}, 0)`,
+                                                                            // Define a cor com base no booleano
+                                                                            color: guideline.adherence ? 'green' : 'red',
                                                                             fontWeight: "bold",
                                                                         }}
                                                                     >
-                                                                        Adherence: {guideline.adherence.toFixed(2)}%
-                                                                    </span>{" "}- {guideline.description}
+                                                                        {/* Exibe "True" ou "False" com base no booleano */}
+                                                                        Adherence: {guideline.adherence ? 'True' : 'False'}
+                                                                    </span>
+                                                                    {/* --- Fim da Alteração de Aderência --- */}
+
+                                                                    {" "}- {guideline.description}
                                                                 </div>
                                                             )}
                                                         </div>
-
                                                     ))}
                                                 </div>
                                             </div>
-                                        </div>
+</div>
                                     </div>
                                 </div>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>

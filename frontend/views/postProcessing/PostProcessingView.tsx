@@ -40,6 +40,49 @@ export default function PostProcessingView() {
         'G21',        'G22',        'G24',        'G26',        'G28',        'G29',        'G30',        'G31',
         'G32',        'G33',        'G34',        'G35',        'G36',        'G37',        'G38',        'G39',
         'G42',        'G44',        'G45',        'G46',        'G47',        'G48',        'G49',        'G50'    ];
+       
+    const weight = [
+    1.77,
+    1.21, // Peso para G3
+    0.32, // Peso para G7
+    0.42, // Peso para G8
+    0.92, // Peso para G9
+    1.20, // Peso para G10
+    1.18, // Peso para G11
+    2.0, // Peso para G12
+    0.86, // Peso para G13
+    1.17, // Peso para G14
+    0.75, // Peso para G15
+    3.22, // Peso para G16
+    1.07, // Peso para G17
+    2.13, // Peso para G18
+    4.79, // Peso para G19
+    3.89, // Peso para G20
+    2.42, // Peso para G21
+    1.21, // Peso para G22
+    1.16, // Peso para G24
+    1.02, // Peso para G26
+    0.68, // Peso para G28
+    1.03, // Peso para G29
+    2.66, // Peso para G30
+    1.39, // Peso para G31
+    0.5, // Peso para G32
+    0.81, // Peso para G33
+    1.98, // Peso para G34
+    0.5, // Peso para G35
+    0.67, // Peso para G36
+    0.31, // Peso para G37
+    1.0, // Peso para G38
+    0.69, // Peso para G39
+    0.64, // Peso para G42
+    1.56, // Peso para G44
+    0.89, // Peso para G45
+    0.54, // Peso para G46
+    0.69, // Peso para G47
+    0.21, // Peso para G48
+    0.9, // Peso para G49
+    1.0  // Peso para G50
+  ];
     const descriptions = [
         { title: 'Minimize model size', description: 'The designer should create models which comply with the BPMN standard. Once the\n' +
                 'process logic has been defined, the designer should validate a model ensuring that the\n' +
@@ -235,6 +278,7 @@ export default function PostProcessingView() {
                     title: descriptions[index].title,
                     description: descriptions[index].description,
                     adherence: adherenceMap.get(guidelineId) ?? true, // Agora é um booleano
+                    weight: weight[index],
                 }));
 
                 console.log("Diretrizes antes de ordenar:", combinedGuidelines);
@@ -1062,7 +1106,7 @@ export default function PostProcessingView() {
                         onClick={() => setActiveTab('bpmn-good-modeling-practices')}
                         style={{color: '#10ad73'}}
                     >
-                        BPMN Good Modeling Practices
+                        BPMN Good Modeling Practices Prioritization
                     </a>
                 </li>
             </ul>
@@ -1482,7 +1526,7 @@ export default function PostProcessingView() {
                                             borderRadius: "12px 12px 12px 12px",
                                             lineHeight: "1.5714285714285714"
                                         }}>
-                                            <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices List</a>
+                                            <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices Prioritization List</a>
                                             <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}}
                                                             title={"This is the list of forty good modeling practies"}/>
                                             <div style={{display: "flex", flexDirection: "column"}}>
@@ -1511,7 +1555,21 @@ export default function PostProcessingView() {
                                                                 }}
                                                                 className={`${activeButton === index ? "active" : ''} ${!guideline.adherence ? 'unmet-guideline' : ''}`}
                                                             >
-                                                                {guideline.id} - <span style={{fontWeight: "bold"}}>{guideline.title}</span>
+                                                            {/* 1. Ordem (1º, 2º...) com fonte maior */}
+                                                            <span style={{ fontWeight: "bold", marginRight: "8px" }}>
+                                                                {index + 1}º
+                                                            </span>
+
+                                                            {/* 2. Título (já em negrito) */}
+                                                            <span style={{fontWeight: "bold"}}>{guideline.title}</span>
+
+                                                            {/* 3. ID entre parênteses (após o título) */}
+                                                            <span style={{fontSize: "0.9em", marginLeft: "5px", opacity: 0.7}}>
+                                                                (id: {guideline.id})
+                                                            </span>
+                                                            <span style={{marginLeft: "5px", fontWeight: "bold"}}>
+                                                                | weight: {guideline.weight}
+                                                            </span>
                                                             </button>
                                                             {activeButton === index && (
                                                                 <div style={{marginTop: "5px", marginLeft: "20px", color: "black"}}>

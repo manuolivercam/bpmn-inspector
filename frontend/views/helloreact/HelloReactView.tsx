@@ -38,7 +38,22 @@ export default function HelloReactView() {
     const [show, setShow] = useState(true)
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
     let selectedFile: any = null;
-
+    
+    useEffect(() => {
+        // Dispara a limpeza no backend assim que a tela carrega
+        axios.delete('/deleteAllFiles')
+            .then(() => {
+                console.log("Ambiente limpo: arquivos anteriores deletados com sucesso.");
+                // Garante que o estado local também comece vazio
+                setUploadedFiles([]);
+                setShowResults(false);
+                setShowHome(true);
+            })
+            .catch(error => {
+                console.error("Erro ao tentar limpar arquivos antigos:", error);
+            });
+    }, []);
+    
     const filterCollection = () => {
 
         const checkboxes = document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');

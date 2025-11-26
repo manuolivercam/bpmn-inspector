@@ -1564,11 +1564,11 @@ export default function PostProcessingView() {
                                                             <span style={{fontWeight: "bold"}}>{guideline.title}</span>
 
                                                             {/* 3. ID entre parênteses (após o título) */}
-                                                            <span style={{fontSize: "0.9em", marginLeft: "5px", opacity: 0.7}}>
+                                                            <span style={{fontSize: "0.9em", marginLeft: "5px", opacity: 0.7, fontWeight: "normal"}}>
                                                                 (id: {guideline.id})
                                                             </span>
                                                             <span style={{marginLeft: "5px", fontWeight: "bold"}}>
-                                                                | weight: {guideline.weight}
+                                                                | w: {guideline.weight.toFixed(2)}
                                                             </span>
                                                             </button>
                                                             {activeButton === index && (

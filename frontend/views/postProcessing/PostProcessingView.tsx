@@ -1423,8 +1423,7 @@ export default function PostProcessingView() {
                             <>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>
                                     <div style={{display: "flex", flexDirection: "row"}}>
-                                    
-                                        {/* <div style={{width: "60%", marginRight:"10px", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
+                                    <div style={{width: "60%", marginRight:"10px", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
                                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap" }}>
                                                 <a style={{ fontSize: '25px', color: 'black', fontWeight: "bold" }}>Good Modeling Practices Adherence</a>
                                                 <CiCircleQuestion style={{ fontSize: '18px', marginBottom: "3%", cursor: "help" }} title={"This is a graph of the adherence's percentage of each good modeling practices"} />
@@ -1514,17 +1513,19 @@ export default function PostProcessingView() {
                                                 </tbody>
                                             </table>
                                         </div>
-                                        </div> */}
+                                        </div> 
                                         
                                   
                                         <div style={{
-                                            width: "100%", // Alterado de 40% para 100%
+                                            width: "40%", // Alterado de 40% para 100%
                                             paddingRight: "10px",
                                             border: "2px solid #d8d8d8",
                                             background: "white",
                                             padding: "5px 15px 15px 15px",
                                             borderRadius: "12px 12px 12px 12px",
-                                            lineHeight: "1.5714285714285714"
+                                            lineHeight: "1.5714285714285714",
+                                            height: "100vh",        
+                                            overflowY: "auto"
                                         }}>
                                             <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices Prioritization List</a>
                                             <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}}
@@ -1532,7 +1533,7 @@ export default function PostProcessingView() {
                                             <div style={{display: "flex", flexDirection: "column"}}>
                                                 <div style={{
                                                     marginTop: "10px",
-                                                    columnCount: 2, // <-- Adicionado para criar 2 colunas
+                                                    columnCount: 1, // <-- Adicionado para criar 2 colunas
                                                     columnGap: "20px"  // <-- Adicionado para espaçamento
                                                 }}>
                                                     {sortedGuidelines.map((guideline, index) => (

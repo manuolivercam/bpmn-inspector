@@ -850,28 +850,35 @@ export default function PostProcessingView() {
 
 
     // @ts-ignore
+    // @ts-ignore
     const calculatePercentage = (filesToDisplay) => {
-        const columnCount = 40; // Numero di colonne da G1 a G40
+        const columnCount = g.length; // Usa o tamanho real do array g (40)
         const percentageArray: number[] = [];
 
-        // Inizializza l'array delle percentuali a 0
+        // Inicializa o array com 0
         for (let i = 0; i < columnCount; i++) {
             percentageArray[i] = 0;
         }
 
-        // Calcola il numero di valori 'true' per ogni colonna
+        // Calcula
         filesToDisplay.forEach((file: { modelType: string; isValid: any; guidelineMap: { [x: string]: any; }; }) => {
             if (file.modelType === "Process Collaboration" && file.isValid) {
                 for (let i = 0; i < columnCount; i++) {
-                    if (file.guidelineMap[`G${i + 1}`]) {
+                    // CORREÇÃO AQUI: Usa g[i] em vez de `G${i + 1}`
+                    // g[i] vai retornar 'G2', depois 'G3', depois 'G7'... alinhando perfeitamente com o gráfico
+                    if (file.guidelineMap[g[i]]) {
                         percentageArray[i]++;
                     }
                 }
             }
         });
 
-        // Calcola la percentuale per ogni colonna
+        // Calcula a porcentagem final
         const totalFiles = filesToDisplay.filter((file: { modelType: string; isValid: any; }) => file.modelType === "Process Collaboration" && file.isValid).length;
+        
+        // Evita divisão por zero se não houver arquivos
+        if (totalFiles === 0) return percentageArray;
+
         const percentageResult = percentageArray.map(count => (count / totalFiles) * 100);
 
         return percentageResult;
@@ -1070,6 +1077,10 @@ export default function PostProcessingView() {
         percentage: data.values[0].toString(),
     }));
 
+    const priorityOrder = [
+        'G19', 'G20', 'G16', 'G30', 'G21', 'G18', 'G12', 'G34', 'G2', 'G44', 'G31', 'G3', 'G22', 'G10', 'G11', 'G14','G24', 'G17', 'G29', 'G26', 'G38', 'G50', 
+        'G9', 'G49', 'G45', 'G13', 'G33', 'G15', 'G39', 'G47', 'G28', 'G36', 'G42', 'G46', 'G32', 'G35', 'G8', 'G7', 'G37', 'G48'
+    ];
     return (
         <div style={{background:"#fafafb"}} className="flex flex-col h-full items-left justify-left p-l text-left box-border">
             <ul style={{background:"#fafafb"}} className="nav nav-tabs nav-fill">
@@ -1423,7 +1434,7 @@ export default function PostProcessingView() {
                             <>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>
                                     <div style={{display: "flex", flexDirection: "row"}}>
-                                    <div style={{width: "60%", marginRight:"10px", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
+                                    <div style={{width: "50%", marginRight:"10px", paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
                                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap" }}>
                                                 <a style={{ fontSize: '25px', color: 'black', fontWeight: "bold" }}>Good Modeling Practices Adherence</a>
                                                 <CiCircleQuestion style={{ fontSize: '18px', marginBottom: "3%", cursor: "help" }} title={"This is a graph of the adherence's percentage of each good modeling practices"} />
@@ -1435,32 +1446,45 @@ export default function PostProcessingView() {
                                             <div id="chartRD" style={{position: "relative", height:"100vh", width:"100%"}}>
                                                 <Radar options={optionRadarChartData}  data={radarChartData} onClick={onClick} ref={chartRef}></Radar>
                                             </div>
-                                            <div style={{ display: "flex", flexDirection: "row" }}>
-                                                <table style={{ marginRight: "10px" }}>
-                                                    <thead>
-                                                    <tr>
-                                                        <th>Most Good Modeling Practices</th>
-                                                    </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    {radarChartData.datasets[0].data
-                                                        .map((percentage, index) => ({ percentage, index }))
-                                                        .sort((a, b) => b.percentage - a.percentage)
-                                                        .slice(0, 10)
-                                                        .map(({ percentage, index }) => (
-                                                            <tr key={index} style={{ fontSize: "12px" }}>
-                                                                <td>
-                                                                    {g[index]} - <span style={{ fontWeight: "bold" }}>{descriptions[index].title}</span>
-                                                                    <span style={{ color: `rgb(${255 - percentage * 2.55}, ${percentage * 2.55}, 0)`, fontWeight: "bold", marginLeft: "10px" }}>
-                                                                        {percentage.toFixed(2)}%
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                          <div style={{ display: "flex", flexDirection: "row" }}>
+                                            {/* TABELA 1: MOST GOOD MODELING PRACTICES */}
+                                            {/* Regra: Pega as 10 com MAIOR porcentagem, depois ordena por prioridade */}
+                                            <table style={{ marginRight: "10px" }}>
+                                                <thead>
+                                                <tr>
+                                                    <th>Most Good Modeling Practices</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {radarChartData.datasets[0].data
+                                                    .map((percentage, index) => ({ percentage, index, guideline: g[index] }))
+                                                    // 1. ORDENAÇÃO PARA SELEÇÃO: Da maior para a menor porcentagem (Melhores)
+                                                    .sort((a, b) => {
+                                                        // Critério principal: Porcentagem (Descrescente)
+                                                        if (b.percentage !== a.percentage) return b.percentage - a.percentage;
+                                                        // Critério de desempate (opcional): Prioridade para garantir que, em empate de 100%, peguemos as mais importantes
+                                                        return priorityOrder.indexOf(a.guideline) - priorityOrder.indexOf(b.guideline);
+                                                    })
+                                                    // 2. CORTE: Pega apenas as 10 melhores
+                                                    .slice(0, 10)
+                                                    // 3. ORDENAÇÃO PARA EXIBIÇÃO: Reordena as 10 selecionadas pela Prioridade
+                                                    .sort((a, b) => priorityOrder.indexOf(a.guideline) - priorityOrder.indexOf(b.guideline))
+                                                    .map(({ percentage, index, guideline }) => (
+                                                        <tr key={index} style={{ fontSize: "12px" }}>
+                                                            <td>
+                                                                {guideline} - <span style={{ fontWeight: "bold" }}>{descriptions[g.indexOf(guideline)].title}</span>
+                                                                <span style={{ color: `rgb(${255 - percentage * 2.55}, ${percentage * 2.55}, 0)`, fontWeight: "bold", marginLeft: "10px" }}>
+                                                                    {percentage.toFixed(2)}%
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
 
-                                              <table>
+                                            {/* TABELA 2: MOST VIOLATED GOOD MODELING PRACTICES */}
+                                            {/* Regra: Pega as 10 com PIOR porcentagem (que tenham erro), depois ordena por prioridade */}
+                                            <table>
                                                 <thead>
                                                     <tr>
                                                         <th>Most Violated Good Modeling Practices</th>
@@ -1468,30 +1492,39 @@ export default function PostProcessingView() {
                                                 </thead>
                                                 <tbody>
                                                     {(() => {
-                                                        // Adicione estes logs para depuração
                                                         const allPercentages = radarChartData.datasets[0].data;
-                                                        console.log("--- DEBUG INICIADO ---");
-                                                        console.log("Passo 1: Todas as porcentagens de aderência calculadas:", allPercentages);
 
+                                                        // 1. Prepara os dados
                                                         const violatedGuidelines = allPercentages
                                                             .map((percentage, index) => ({ percentage, index, guideline: g[index] }))
-                                                            .filter(({ percentage }) => percentage < 100);
-                                                        console.log("Passo 2: Diretrizes com aderência < 100% (DEPOIS de filtrar):", violatedGuidelines);
+                                                            .filter(({ percentage }) => percentage < 100); // Filtra apenas as que têm erro
 
-                                                        const sortedViolated = violatedGuidelines.sort((a, b) => a.percentage - b.percentage);
-                                                        console.log("Passo 3: Diretrizes violadas ordenadas (da menor para a maior %):", sortedViolated);
+                                                        // 2. ORDENAÇÃO PARA SELEÇÃO: Da menor para a maior porcentagem (Piores/Mais Violadas)
+                                                        const sortedByViolation = violatedGuidelines.sort((a, b) => {
+                                                            // Critério principal: Porcentagem (Crescente -> quanto menor, pior)
+                                                            if (a.percentage !== b.percentage) return a.percentage - b.percentage;
+                                                            // Critério de desempate: Prioridade
+                                                            return priorityOrder.indexOf(a.guideline) - priorityOrder.indexOf(b.guideline);
+                                                        });
 
-                                                        const finalData = sortedViolated.slice(0, 10);
-                                                        console.log("Passo 4: Dados finais a serem exibidos (Top 10 das violadas):", finalData);
-                                                        console.log("--- DEBUG FINALIZADO ---");
+                                                        // 3. CORTE: Pega apenas as 10 piores
+                                                        const top10Violated = sortedByViolation.slice(0, 10);
 
+                                                        // 4. ORDENAÇÃO PARA EXIBIÇÃO: Reordena as 10 selecionadas pela Prioridade
+                                                        const finalData = top10Violated.sort((a, b) => {
+                                                            const indexA = priorityOrder.indexOf(a.guideline);
+                                                            const indexB = priorityOrder.indexOf(b.guideline);
+                                                            if (indexA === -1) return 1;
+                                                            if (indexB === -1) return -1;
+                                                            return indexA - indexB;
+                                                        });
 
-                                                        // Código original para renderizar a tabela
-                                                        const rows = finalData.map(({ percentage, index }) => (
+                                                        // Renderização
+                                                        const rows = finalData.map(({ percentage, index, guideline }) => (
                                                                 <tr key={index} style={{ fontSize: "12px" }}>
                                                                     <td>
-                                                                        {`${g[index]} - `}
-                                                                        <span style={{ fontWeight: "bold" }}>{descriptions[index].title}</span>
+                                                                        {`${guideline} - `}
+                                                                        <span style={{ fontWeight: "bold" }}>{descriptions[g.indexOf(guideline)].title}</span>
                                                                         <span style={{ color: `rgb(${255 - percentage * 2.55}, ${percentage * 2.55}, 0)`, fontWeight: "bold", marginLeft: "10px" }}>
                                                                         {percentage.toFixed(2)}%
                                                                         </span>
@@ -1499,7 +1532,7 @@ export default function PostProcessingView() {
                                                                 </tr>
                                                             ));
 
-                                                        // Adiciona as linhas vazias para completar até 10
+                                                        // Preenche com linhas vazias se tiver menos de 10 erros
                                                         while (rows.length < 10) {
                                                             rows.push(
                                                                 <tr key={rows.length + 10} style={{ fontSize: "12px" }}>
@@ -1512,12 +1545,12 @@ export default function PostProcessingView() {
                                                     })()}
                                                 </tbody>
                                             </table>
-                                        </div>
+                                            </div>
                                         </div> 
                                         
                                   
                                         <div style={{
-                                            width: "40%", // Alterado de 40% para 100%
+                                            width: "50%", // Alterado de 40% para 100%
                                             paddingRight: "10px",
                                             border: "2px solid #d8d8d8",
                                             background: "white",

@@ -27,8 +27,8 @@ interface filesInfoFiltered {
     isValid: boolean;
     isDuplicated: boolean;
     isEnglish: string;
-    elementMap: Map<string, number>;
-    guidelineMap: Map<string, string>;
+    elementMap: Record<string, number>; // Use Record para objetos JSON
+    guidelineMap: { [key: string]: any }; // Esta é a "Index Signature" que resolve o erro
     errorLog: string;
 }
 export default function PostProcessingView() {
@@ -238,8 +238,8 @@ export default function PostProcessingView() {
         isValid: boolean;
         isEnglish: string;
         isDuplicated: boolean;
-        elementMap: Map<string, number>;
-        guidelineMap: Map<string, string>;
+       elementMap: Record<string, number>; // Use Record para objetos JSON
+        guidelineMap: { [key: string]: any }; // Esta é a "Index Signature" que resolve o erro
     }
 
     useEffect(() => {
@@ -1628,7 +1628,7 @@ export default function PostProcessingView() {
                                                     ))}
                                                 </div>
                                             </div>
-</div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>
@@ -1686,15 +1686,26 @@ export default function PostProcessingView() {
                                                         <p className="file-info-item-name file-name" style={{width:"9%"}}>
                                                             <BsDiagram2 /> {file.name}
                                                         </p>
-                                                        <div className="file-info-item" style={{display:"flex", flexDirection:"row"}} >
-                                                            {Object.entries(file.guidelineMap)
-                                                                .sort((a, b) => parseInt(a[0].substring(1)) - parseInt(b[0].substring(1))) // Ordina gli oggetti per chiave numerica
-                                                                .map(([key, value], index) => (
-                                                                    <span key={key} style={{marginLeft:"0.56%", marginTop:"8px"}} className={`badge badge-pill badge-success ${value ? 'Valid' : 'Invalid'}`}>
-                                                                            {value ? <GiConfirmed /> : <AiFillExclamationCircle />}
-                                                                    </span>
-                                                                ))}
-                                                        </div>
+                                                      <div className="file-info-item" style={{display:"flex", flexDirection:"row", overflowX: "scroll"}} >
+                                                        {/* Usamos o array 'g' para garantir que a ordem dos ícones case com o cabeçalho */}
+                                                        {g.map((guidelineId) => {
+                                                            const value = file.guidelineMap[guidelineId];
+                                                            
+                                                            // Converte para booleano (aceita true ou "true")
+                                                            const isTrue = value === true || value === "true";
+
+                                                            return (
+                                                                <span 
+                                                                    key={guidelineId} 
+                                                                    style={{marginLeft:"0.56%", marginTop:"8px"}} 
+                                                                    className={`badge badge-pill badge-success ${isTrue ? 'Valid' : 'Invalid'}`}
+                                                                >
+                                                                    {/* Se for True, mostra check. Se for False ou não existir no mapa, mostra erro */}
+                                                                    {isTrue ? <GiConfirmed /> : <AiFillExclamationCircle />}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
                                                     </div>
                                                 </div>
                                             ))}

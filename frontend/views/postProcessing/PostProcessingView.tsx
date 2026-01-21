@@ -19,8 +19,19 @@ import { CiCircleQuestion } from "react-icons/ci";
 import {FaCircle, FaRegImage} from "react-icons/fa";
 import html2canvas from 'html2canvas';
 import {loader} from "react-global-loader";
-import denied from "../../img/denied.png"
+import denied from "../../img/denied.png";
 
+interface filesInfo {
+    errorLog: string;
+    modelType: string;
+    name: string;
+    size: number;
+    isValid: boolean;
+    isEnglish: string;
+    isDuplicated: boolean;
+    elementMap: Record<string, number>; // Use Record para objetos JSON
+    guidelineMap: { [key: string]: any }; // Esta é a "Index Signature" que resolve o erro
+}
 interface filesInfoFiltered {
     name: string;
     size: number;
@@ -230,17 +241,6 @@ export default function PostProcessingView() {
     const [showAllFiles, setShowAllFiles] = useState<boolean>(true);
     let displayButton = filesInfo.length > 1;
     let filesToDisplay = showAllFiles ? filesInfo : filesInfo.slice(0, 1);
-    interface filesInfo {
-        errorLog: string;
-        modelType: string;
-        name: string;
-        size: number;
-        isValid: boolean;
-        isEnglish: string;
-        isDuplicated: boolean;
-       elementMap: Record<string, number>; // Use Record para objetos JSON
-        guidelineMap: { [key: string]: any }; // Esta é a "Index Signature" que resolve o erro
-    }
 
     useEffect(() => {
         loader.show();
@@ -1076,6 +1076,40 @@ export default function PostProcessingView() {
         value: data.text.replace(/\n/g, '-'), // Rimuovi il "\n" e ripristina "-"
         percentage: data.values[0].toString(),
     }));
+    // 1. Calcule a soma total de todos os pesos possíveis (o denominador)
+const totalPossibleWeight = weight.reduce((acc, curr) => acc + curr, 0);
+
+// 2. Função para calcular a aderência ponderada da coleção
+const calculateWeightedAdherence = (files: filesInfo[]) => {
+    // Filtra apenas modelos válidos de colaboração, conforme a lógica da página
+    const validModels = files.filter(f => f.modelType === "Process Collaboration" && f.isValid);
+    
+    if (validModels.length === 0) return 0;
+
+    let totalWeightedScore = 0;
+
+    // Para cada diretriz no array 'g'
+    g.forEach((guidelineId, index) => {
+        let respectedInAll = true;
+        
+        // Verifica se a diretriz foi atendida em TODOS os modelos válidos da coleção
+        validModels.forEach(file => {
+            if (!file.guidelineMap[guidelineId]) {
+                respectedInAll = false;
+            }
+        });
+
+        // Se a diretriz foi respeitada em toda a coleção, soma o peso correspondente
+        if (respectedInAll) {
+            totalWeightedScore += weight[index];
+        }
+    });
+
+    // Retorna o percentual final: (Soma dos pesos atendidos / Soma total dos pesos) * 100
+    return (totalWeightedScore / totalPossibleWeight) * 100;
+};
+
+const adherencePercentage = calculateWeightedAdherence(filesInfo);
 
     const priorityOrder = [
         'G19', 'G20', 'G16', 'G30', 'G21', 'G18', 'G12', 'G34', 'G2', 'G44', 'G31', 'G3', 'G22', 'G10', 'G11', 'G14','G24', 'G17', 'G29', 'G26', 'G38', 'G50', 
@@ -1548,87 +1582,109 @@ export default function PostProcessingView() {
                                             </div>
                                         </div> 
                                         
-                                  
-                                        <div style={{
-                                            width: "50%", // Alterado de 40% para 100%
-                                            paddingRight: "10px",
-                                            border: "2px solid #d8d8d8",
-                                            background: "white",
-                                            padding: "5px 15px 15px 15px",
-                                            borderRadius: "12px 12px 12px 12px",
-                                            lineHeight: "1.5714285714285714",
-                                            height: "100vh",        
-                                            overflowY: "auto"
-                                        }}>
-                                            <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices Prioritization List</a>
-                                            <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}}
-                                                            title={"This is the list of forty good modeling practies"}/>
-                                            <div style={{display: "flex", flexDirection: "column"}}>
-                                                <div style={{
-                                                    marginTop: "10px",
-                                                    columnCount: 1, // <-- Adicionado para criar 2 colunas
-                                                    columnGap: "20px"  // <-- Adicionado para espaçamento
-                                                }}>
-                                                    {sortedGuidelines.map((guideline, index) => (
-                                                        <div key={guideline.id} style={{
-                                                            marginBottom: "2px",
-                                                            breakInside: "avoid-column" // <-- Adicionado para evitar quebra de item
-                                                        }}>
-                                                            <button
-                                                                key={guideline.id}
-                                                                onClick={() => handleClick(index)}
-                                                                style={{
-                                                                    marginRight: "10px",
-                                                                    padding: "2px",
-                                                                    border: "none",
-                                                                    backgroundColor: "rgba(250, 250, 250, 0.8)",
-                                                                    color: "#10ad73",
-                                                                    borderRadius: "3px",
-                                                                    width: "100%", // <-- Adicionado para preencher a coluna
-                                                                    textAlign: "left" // <-- Adicionado para alinhar o texto
-                                                                }}
-                                                                className={`${activeButton === index ? "active" : ''} ${!guideline.adherence ? 'unmet-guideline' : ''}`}
-                                                            >
-                                                            {/* 1. Ordem (1º, 2º...) com fonte maior */}
-                                                            <span style={{ fontWeight: "bold", marginRight: "8px" }}>
-                                                                {index + 1}º
-                                                            </span>
+                                        <div id="Maioral">    
+                                            <div style={{
+                                                paddingRight: "10px",
+                                                border: "2px solid #d8d8d8",
+                                                background: "white",
+                                                padding: "5px 15px 15px 15px",
+                                                borderRadius: "12px 12px 12px 12px",
+                                                lineHeight: "1.5714285714285714",
+                                                height: "100vh",        
+                                                overflowY: "auto"
+                                            }}>
+                                                <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices Prioritization List</a>
+                                                <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}}
+                                                                title={"This is the list of forty good modeling practies"}/>
+                                                <div style={{display: "flex", flexDirection: "column"}}>
+                                                    <div style={{
+                                                        marginTop: "10px",
+                                                        columnCount: 1, // <-- Adicionado para criar 2 colunas
+                                                        columnGap: "20px"  // <-- Adicionado para espaçamento
+                                                    }}>
+                                                        {sortedGuidelines.map((guideline, index) => (
+                                                            <div key={guideline.id} style={{
+                                                                marginBottom: "2px",
+                                                                breakInside: "avoid-column" // <-- Adicionado para evitar quebra de item
+                                                            }}>
+                                                                <button
+                                                                    key={guideline.id}
+                                                                    onClick={() => handleClick(index)}
+                                                                    style={{
+                                                                        marginRight: "10px",
+                                                                        padding: "2px",
+                                                                        border: "none",
+                                                                        backgroundColor: "rgba(250, 250, 250, 0.8)",
+                                                                        color: "#10ad73",
+                                                                        borderRadius: "3px",
+                                                                        width: "100%", // <-- Adicionado para preencher a coluna
+                                                                        textAlign: "left" // <-- Adicionado para alinhar o texto
+                                                                    }}
+                                                                    className={`${activeButton === index ? "active" : ''} ${!guideline.adherence ? 'unmet-guideline' : ''}`}
+                                                                >
+                                                                {/* 1. Ordem (1º, 2º...) com fonte maior */}
+                                                                <span style={{ fontWeight: "bold", marginRight: "8px" }}>
+                                                                    {index + 1}º
+                                                                </span>
 
-                                                            {/* 2. Título (já em negrito) */}
-                                                            <span style={{fontWeight: "bold"}}>{guideline.title}</span>
+                                                                {/* 2. Título (já em negrito) */}
+                                                                <span style={{fontWeight: "bold"}}>{guideline.title}</span>
 
-                                                            {/* 3. ID entre parênteses (após o título) */}
-                                                            <span style={{fontSize: "0.9em", marginLeft: "5px", opacity: 0.7, fontWeight: "normal"}}>
-                                                                (id: {guideline.id})
-                                                            </span>
-                                                            <span style={{marginLeft: "5px", fontWeight: "bold"}}>
-                                                                | w: {guideline.weight.toFixed(2)}
-                                                            </span>
-                                                            </button>
-                                                            {activeButton === index && (
-                                                                <div style={{marginTop: "5px", marginLeft: "20px", color: "black"}}>
-                                                                    
-                                                                    {/* --- Início da Alteração de Aderência --- */}
-                                                                    <span
-                                                                        style={{
-                                                                            // Define a cor com base no booleano
-                                                                            color: guideline.adherence ? 'green' : 'red',
-                                                                            fontWeight: "bold",
-                                                                        }}
-                                                                    >
-                                                                        {/* Exibe "True" ou "False" com base no booleano */}
-                                                                        Adherence: {guideline.adherence ? 'True' : 'False'}
-                                                                    </span>
-                                                                    {/* --- Fim da Alteração de Aderência --- */}
+                                                                {/* 3. ID entre parênteses (após o título) */}
+                                                                <span style={{fontSize: "0.9em", marginLeft: "5px", opacity: 0.7, fontWeight: "normal"}}>
+                                                                    (id: {guideline.id})
+                                                                </span>
+                                                                <span style={{marginLeft: "5px", fontWeight: "bold"}}>
+                                                                    | w: {guideline.weight.toFixed(2)}
+                                                                </span>
+                                                                </button>
+                                                                {activeButton === index && (
+                                                                    <div style={{marginTop: "5px", marginLeft: "20px", color: "black"}}>
+                                                                        
+                                                                        {/* --- Início da Alteração de Aderência --- */}
+                                                                        <span
+                                                                            style={{
+                                                                                // Define a cor com base no booleano
+                                                                                color: guideline.adherence ? 'green' : 'red',
+                                                                                fontWeight: "bold",
+                                                                            }}
+                                                                        >
+                                                                            {/* Exibe "True" ou "False" com base no booleano */}
+                                                                            Adherence: {guideline.adherence ? 'True' : 'False'}
+                                                                        </span>
+                                                                        {/* --- Fim da Alteração de Aderência --- */}
 
-                                                                    {" "}- {guideline.description}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                                        {" "}- {guideline.description}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                            <div style={{
+                                                background: "white", 
+                                                padding: "30px", 
+                                                borderRadius: "12px", 
+                                                border: "2px solid #d8d8d8",
+                                                textAlign: "center",
+                                                marginTop:"10px"
+                                            }}>
+                                                <h3 style={{ margin: "0 0 10px 0", color: "#555", fontSize: "20px" }}>
+                                                    Indicador de Aderência Final
+                                                </h3>
+                                                <div style={{
+                                                    fontSize: "64px", 
+                                                    fontWeight: "bold", 
+                                                    color: adherencePercentage > 70 ? "#10ad73" : adherencePercentage > 40 ? "#ffcc00" : "#ff4d4d"
+                                                }}>
+                                                    {adherencePercentage.toFixed(2)}%
+                                                </div>
+                                                <p style={{ color: "#888", fontSize: "14px", marginTop: "10px" }}>
+                                                    Pontuação ponderada baseada em {g.length} diretrizes aplicadas à coleção.
+                                                </p>
+                                            </div>
+                                            </div>
                                     </div>
                                 </div>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>

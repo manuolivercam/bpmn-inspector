@@ -21,6 +21,7 @@ import html2canvas from 'html2canvas';
 import {loader} from "react-global-loader";
 import denied from "../../img/denied.png";
 
+
 interface filesInfo {
     errorLog: string;
     modelType: string;
@@ -1689,105 +1690,84 @@ const adherencePercentage = calculateWeightedAdherence(filesInfo);
                                 </div>
                                 <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>
                                     <div style={{width: "100%", display: 'flex',flexDirection: "column",paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px",marginRight:"10px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
+                                   {filesToDisplay
+                                    .filter(file => file.modelType === "Process Collaboration" && file.isValid)
+                                    .map((file, index) => {
+                                        // Cálculo individual da aderência
+                                        let individualWeightedScore = 0;
+                                        g.forEach((guidelineId, idx) => {
+                                            const value = file.guidelineMap[guidelineId];
+                                            if (value === true || value === "true") {
+                                                individualWeightedScore += weight[idx];
+                                            }
+                                        });
+                                        const individualPercentage = (individualWeightedScore / totalPossibleWeight) * 100;
 
-                                        <div style={{fontSize: "18px", color: "black", width:"100%", display:"flex"}}>
-                                            <span className="file-info-item-name" style={{ fontSize: "13px", fontWeight: "bold", width:"20%"}}>File name</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G2</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G3</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G7</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G8</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G9</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G10</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G11</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G12</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G13</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G14</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G15</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G16</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G17</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G18</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G19</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G20</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G21</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G22</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G24</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G26</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G28</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G29</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G30</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G31</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G32</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G33</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G34</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G35</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G36</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G37</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G38</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G39</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G42</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G44</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G45</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G46</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G47</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G48</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G49</span>
-                                            <span className="file-info-item" style={{ fontSize: '12px', fontWeight:"bold"}}>G50</span>
-                                        </div>
-
-                                        {filesToDisplay
-                                            .filter(file => file.modelType === "Process Collaboration" && file.isValid)
-                                            .map((file, index) => {
-                                                // Cálculo individual da aderência para este arquivo específico
-                                                let individualWeightedScore = 0;
-                                                g.forEach((guidelineId, idx) => {
-                                                    const value = file.guidelineMap[guidelineId];
-                                                    if (value === true || value === "true") {
-                                                        individualWeightedScore += weight[idx];
-                                                    }
-                                                });
-                                                const individualPercentage = (individualWeightedScore / totalPossibleWeight) * 100;
-
-                                                return (
-                                                    <div key={index} style={{ border: "2px solid rgba(0, 0, 0, 0.05)", padding: "1px", borderRadius: "5px", marginBottom: "1px", fontSize: "15px", color: "black" }}>
-                                                        <div className="file-info">
-                                                            <p className="file-info-item-name file-name" style={{width:"20%", display: "flex", alignItems: "center", gap: "8px"}}>
-                                                                <BsDiagram2 /> 
-                                                                <span style={{overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}} title={file.name}>
-                                                                    {file.name}
-                                                                </span>
-                                                                <span style={{
-                                                                    fontSize: "10px", 
-                                                                    backgroundColor: "#10ad73", 
-                                                                    color: "white", 
-                                                                    padding: "1px 5px", 
-                                                                    borderRadius: "8px",
-                                                                    fontWeight: "bold",
-                                                                    flexShrink: 0
-                                                                }}>
-                                                                    {individualPercentage.toFixed(0)}%
-                                                                </span>
-                                                            </p>
-                                                            <div className="file-info-item" style={{display:"flex", flexDirection:"row", overflowX: "scroll"}} >
-                                                                {g.map((guidelineId) => {
-                                                                    const value = file.guidelineMap[guidelineId];
-                                                                    const isTrue = value === true || value === "true";
-
-                                                                    return (
-                                                                        <span 
-                                                                            key={guidelineId} 
-                                                                            style={{marginLeft:"0.56%", marginTop:"8px"}} 
-                                                                            className={`badge badge-pill badge-success ${isTrue ? 'Valid' : 'Invalid'}`}
-                                                                        >
-                                                                            {isTrue ? <GiConfirmed /> : <AiFillExclamationCircle />}
-                                                                        </span>
-                                                                    );
-                                                                })}
-                                                            </div>
+                                        return (
+                                            <div key={index} style={{ border: "2px solid rgba(0, 0, 0, 0.05)", borderRadius: "8px", marginBottom: "8px", background: "white" }}>
+                                                
+                                                <div className="file-block-wrapper">
+                                                    
+                                                    {/* 1. Seção do Nome e Porcentagem (Tudo na mesma linha) */}
+                                                    <div className="file-name-section">
+                                                        <div style={{ display: "flex", alignItems: "center", width: "100%", overflow: "hidden" }}>
+                                                            
+                                                            {/* Ícone */}
+                                                            <BsDiagram2 size={16} style={{ flexShrink: 0, marginRight: "8px" }} />
+                                                            
+                                                            {/* Nome do Arquivo (Ocupa o espaço disponível e trunca se necessário) */}
+                                                            <span title={file.name} className="file-name-text" style={{ flex: 1, marginRight: "8px" }}>
+                                                                {file.name}
+                                                            </span>
+                                                            
+                                                            {/* Badge da Porcentagem (Somente o número) */}
+                                                            <span style={{
+                                                                fontSize: "11px",
+                                                                backgroundColor: individualPercentage >= 50 ? "#10ad73" : "#e63946",
+                                                                color: "white",
+                                                                padding: "1px 6px",
+                                                                borderRadius: "10px",
+                                                                fontWeight: "bold",
+                                                                flexShrink: 0
+                                                            }}>
+                                                                {individualPercentage.toFixed(0)}%
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
-                                    </div>
+
+                                                    {/* 2. Seção de Rolagem das Diretrizes (Permanece igual) */}
+                                                    <div className="guidelines-scroll-container custom-scroll">
+                                                        {g.map((guidelineId) => {
+                                                            const value = file.guidelineMap[guidelineId];
+                                                            const isTrue = value === true || value === "true";
+
+                                                            return (
+                                                                <div key={guidelineId} className="guideline-column">
+                                                                    <span className="guideline-label">
+                                                                        {guidelineId}
+                                                                    </span>
+                                                                    <span 
+                                                                        className={`badge badge-pill ${isTrue ? 'Valid' : 'Invalid'}`}
+                                                                        style={{ 
+                                                                            padding: "4px", 
+                                                                            display: "flex", 
+                                                                            justifyContent: "center",
+                                                                            minWidth: "24px"
+                                                                        }}
+                                                                    >
+                                                                        {isTrue ? <GiConfirmed /> : <AiFillExclamationCircle />}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                }
+                                   </div>
                                     <button style={{ background: 'white', color: '#10ad73', fontSize: '14px', padding: '10px 10px', cursor: 'pointer', marginTop: '0.42cm' }}  onClick={downloadGMFile}>
                                         <GrDocumentCsv /><a style={{ marginRight: '0.5em', color: '#10ad73', marginLeft: '8px' }}>Download Good Modeling Practice report</a>
                                     </button>

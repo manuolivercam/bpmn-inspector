@@ -23,6 +23,82 @@
     font-weight: bold;
 }
 
+/* --- Estilos para o Bloco de Arquivo Otimizado --- */
+
+/* Container principal da linha do arquivo */
+.file-block-wrapper {
+    display: flex;
+    align-items: center; /* Centraliza verticalmente */
+    width: 100%;
+    gap: 15px; /* Espaço entre o nome e os dados */
+    padding: 10px;
+    background: #fff; /* Garante fundo branco */
+}
+
+/* Área do Nome do Arquivo (Fixo à esquerda) */
+.file-name-section {
+    flex: 0 0 250px; /* Largura fixa para o nome - ajuste conforme necessário */
+    max-width: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden; 
+}
+
+.file-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adiciona ... se o nome for muito longo */
+    font-weight: 500;
+    font-size: 14px;
+    display: block;
+}
+
+/* Área de Rolagem das Diretrizes (Ocupa o resto e rola) */
+.guidelines-scroll-container {
+    flex: 1; /* Ocupa todo o espaço restante */
+    display: flex;
+    align-items: center;
+    overflow-x: auto; /* Habilita a rolagem horizontal */
+    overflow-y: hidden;
+    padding-bottom: 5px; /* Espaço para a barra de rolagem não colar */
+}
+
+/* Coluna individual (G2 em cima, Ícone embaixo) */
+.guideline-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px; /* Garante que não esprema */
+    gap: 5px; /* Distância entre o G2 e o Ícone */
+}
+
+.guideline-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #555;
+    text-align: center;
+}
+
+/* --- Barra de Rolagem Personalizada Fina --- */
+.custom-scroll::-webkit-scrollbar {
+    height: 6px; /* Altura da barra horizontal */
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
 .file-info-item {
     box-sizing: border-box;
     white-space: nowrap;

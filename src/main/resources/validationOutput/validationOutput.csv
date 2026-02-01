@@ -1,2 +1,5 @@
 ModelName,Validation,Exception
+02 Minimize model size.bpmn,valid,
+08 Provide activity descriptions.bpmn,valid,
+19 Balance gateways.bpmn,valid,
 Best - Business process model applying all the guidelines.bpmn,valid,

@@ -45,6 +45,7 @@ interface filesInfoFiltered {
 }
 export default function PostProcessingView() {
     const [activeTab, setActiveTab] = useState('bpmn-element-usage');
+    const [threshold, setThreshold] = useState(100);
     const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
     const [dataSets, setDataSets] = useState<Data[]>([]);
     const g = [        'G2',        'G3',        'G7',        'G8',        'G9',        'G10',        'G11',        'G12',
@@ -270,8 +271,8 @@ export default function PostProcessingView() {
                         }
                     });
 
-                    const isAdheredTo = validProcessModels.length > 0 ? respectedCount === validProcessModels.length : true;
-                    adherenceMap.set(guidelineId, isAdheredTo);
+                   const adherenceRate = validProcessModels.length > 0 ? (respectedCount / validProcessModels.length) * 100 : 100;
+                    adherenceMap.set(guidelineId, adherenceRate >= threshold);
                 });
 
                 const combinedGuidelines = g.map((guidelineId, index) => ({
@@ -297,7 +298,7 @@ export default function PostProcessingView() {
 
                 console.log("Diretrizes depois de ordenar:", sorted);
                 setSortedGuidelines(sorted);
-
+                [filesInfo, threshold];
                 loader.hide();
 
                 // Esegui le chiamate API aggiuntive qui
@@ -1080,36 +1081,26 @@ export default function PostProcessingView() {
     // 1. Calcule a soma total de todos os pesos possíveis (o denominador)
 const totalPossibleWeight = weight.reduce((acc, curr) => acc + curr, 0);
 
-// 2. Função para calcular a aderência ponderada da coleção
 const calculateWeightedAdherence = (files: filesInfo[]) => {
-    // Filtra apenas modelos válidos de colaboração, conforme a lógica da página
     const validModels = files.filter(f => f.modelType === "Process Collaboration" && f.isValid);
-    
     if (validModels.length === 0) return 0;
 
     let totalWeightedScore = 0;
 
-    // Para cada diretriz no array 'g'
     g.forEach((guidelineId, index) => {
-        let respectedInAll = true;
-        
-        // Verifica se a diretriz foi atendida em TODOS os modelos válidos da coleção
+        let respectedCount = 0;
         validModels.forEach(file => {
-            if (!file.guidelineMap[guidelineId]) {
-                respectedInAll = false;
-            }
+            if (file.guidelineMap[guidelineId]) respectedCount++;
         });
 
-        // Se a diretriz foi respeitada em toda a coleção, soma o peso correspondente
-        if (respectedInAll) {
+        const adherenceRate = (respectedCount / validModels.length) * 100;
+        if (adherenceRate >= threshold) { // Usa o limiar dinâmico
             totalWeightedScore += weight[index];
         }
     });
 
-    // Retorna o percentual final: (Soma dos pesos atendidos / Soma total dos pesos) * 100
     return (totalWeightedScore / totalPossibleWeight) * 100;
 };
-
 const adherencePercentage = calculateWeightedAdherence(filesInfo);
 
     const priorityOrder = [
@@ -1597,6 +1588,33 @@ const adherencePercentage = calculateWeightedAdherence(filesInfo);
                                                 <a style={{fontSize: '20px', color: 'black', fontWeight: "bold"}}>Good Modeling Practices Prioritization List</a>
                                                 <CiCircleQuestion style={{fontSize: '18px', marginBottom: "3%", cursor: "help"}}
                                                                 title={"This is the list of forty good modeling practies"}/>
+                                                {/* Novo Filtro de Limiar */}
+                                                <div style={{
+                                                    background: "white", 
+                                                    padding: "10px", 
+                                                    borderRadius: "12px", 
+                                                    border: "2px solid #10ad73", 
+                                                    marginBottom: "10px",
+                                                    marginTop: "10px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "10px"
+                                                }}>
+                                                    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                                                        <label style={{ fontWeight: "bold", color: "#10ad73", marginBottom: "5px" }}>
+                                                            Minimum Adherence: {threshold}%
+                                                        </label>
+                                                        <input 
+                                                            type="range" 
+                                                            min="10" 
+                                                            max="100" 
+                                                            step="10" 
+                                                            value={threshold} 
+                                                            onChange={(e) => setThreshold(parseInt(e.target.value))}
+                                                            style={{ cursor: "pointer", accentColor: "#10ad73" }}
+                                                        />
+                                                    </div>
+                                                </div>
                                                 <div style={{display: "flex", flexDirection: "column"}}>
                                                     <div style={{
                                                         marginTop: "10px",

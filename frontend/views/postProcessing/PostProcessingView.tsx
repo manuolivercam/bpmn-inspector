@@ -45,7 +45,10 @@ interface filesInfoFiltered {
 }
 export default function PostProcessingView() {
     const [activeTab, setActiveTab] = useState('bpmn-element-usage');
+    const [filesInfo, setFilesInfo] = useState<Array<filesInfo>>([]);
     const [threshold, setThreshold] = useState(100);
+
+    const [activeButton, setActiveButton] = useState<number | null>(null);
     const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
     const [dataSets, setDataSets] = useState<Data[]>([]);
     const g = [        'G2',        'G3',        'G7',        'G8',        'G9',        'G10',        'G11',        'G12',
@@ -231,14 +234,47 @@ export default function PostProcessingView() {
                 'might make the diagrams reading a challenge. The designer should not model further\n' +
                 'properties with different colours, in order to make diagrams recognisable.' },
     ];
-    const [activeButton, setActiveButton] = React.useState(null);
-    const [sortedGuidelines, setSortedGuidelines] = useState<any[]>([]);
+   // 2. Use o useMemo para que sortedGuidelines mude sempre que o threshold mudar
+    const sortedGuidelines = React.useMemo(() => {
+        const priorityOrder = [
+            'G19', 'G20', 'G16', 'G30', 'G21', 'G18', 'G12', 'G34', 'G2', 'G44', 'G31', 'G3', 'G22', 'G10', 'G11', 'G14','G24', 'G17', 'G29', 'G26', 'G38', 'G50', 
+            'G9', 'G49', 'G45', 'G13', 'G33', 'G15', 'G39', 'G47', 'G28', 'G36', 'G42', 'G46', 'G32', 'G35', 'G8', 'G7', 'G37', 'G48'
+        ];
+
+        const validProcessModels = filesInfo.filter((file: any) => file.modelType === "Process Collaboration" && file.isValid);
+
+        const combined = g.map((guidelineId, index) => {
+            let respectedCount = 0;
+            validProcessModels.forEach((file: any) => {
+                if (file.guidelineMap[guidelineId]) {
+                    respectedCount++;
+                }
+            });
+
+            const adherenceRate = validProcessModels.length > 0 ? (respectedCount / validProcessModels.length) * 100 : 100;
+            
+            return {
+                id: guidelineId,
+                title: descriptions[index].title,
+                description: descriptions[index].description,
+                adherence: adherenceRate >= threshold, // A lógica de cor (verde/vermelho) depende disso
+                percentage: adherenceRate,
+                weight: weight[index],
+            };
+        });
+
+        return combined.sort((a, b) => {
+            const indexA = priorityOrder.indexOf(a.id);
+            const indexB = priorityOrder.indexOf(b.id);
+            return indexA - indexB;
+        });
+    }, [filesInfo, threshold]); // O React observa essas duas variáveis para atualizar a lista
+
     const location = useLocation()
     const filteringArray: string[] = [];
     const {data} = location.state
     Chart.register(...registerables);
     const [correlationData, setCorrelationData] = useState<CorrelationPair[]>([]);
-    const [filesInfo, setFilesInfo] = useState<Array<filesInfo>>([]);
     const [filesInfoFiltered, setFilesInfoFiltered] = useState<Array<filesInfoFiltered>>([]);
     const [showAllFiles, setShowAllFiles] = useState<boolean>(true);
     let displayButton = filesInfo.length > 1;
@@ -297,7 +333,6 @@ export default function PostProcessingView() {
                 });
 
                 console.log("Diretrizes depois de ordenar:", sorted);
-                setSortedGuidelines(sorted);
                 [filesInfo, threshold];
                 loader.hide();
 
@@ -894,19 +929,21 @@ export default function PostProcessingView() {
 
     const labels = Array.from({ length: 40 }, (_, index) => `G${index + 1}`); // Genera un array di etichette "G1", "G2", ecc.
 
-    const radarChartData = {
-        labels: g, // Array di etichette
+   const radarChartData = {
+        labels: g,
         datasets: [
             {
-                label: "% of good modeling practices's adherence",
-                backgroundColor: "rgba(16,173,115,0.7)",
-                borderColor: "rgba(8,59,12,0.6)",
-                data: percentageResult, // Array di valori delle percentuali
-                link: [''],
-                pointRadius: 8, // Dimensione dei punti
+                label: "% of adherence",
+                backgroundColor: "rgba(16,173,115,0.2)",
+                borderColor: "#10ad73",
+                data: percentageResult, // Mantém a posição fixa baseada nos dados reais
+                // Altera apenas a cor do ponto: Verde se >= threshold, Vermelho se <
+                pointBackgroundColor: percentageResult.map(p => p >= threshold ? "#10ad73" : "red"),
+                pointBorderColor: "#fff",
+                pointRadius: 6,
             },
         ],
-    };
+    }
 
     const optionRadarChartData = {
         responsive: true,
@@ -1602,8 +1639,12 @@ const adherencePercentage = calculateWeightedAdherence(filesInfo);
                                                 }}>
                                                     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                                                         <label style={{ fontWeight: "bold", color: "#10ad73", marginBottom: "5px" }}>
-                                                            Minimum Adherence: {threshold}%
+                                                            Threshold Minimum Adherence: {threshold}%
                                                         </label>
+                                                        <CiCircleQuestion 
+                                                        style={{ fontSize: '18px', cursor: 'help', color: "#10ad73" }} 
+                                                        title={"Adjust this slider to set the minimum acceptance level. Guidelines below this percentage will be flagged in red."} 
+                                                    />
                                                         <input 
                                                             type="range" 
                                                             min="10" 
@@ -1695,7 +1736,7 @@ const adherencePercentage = calculateWeightedAdherence(filesInfo);
                                                 <div style={{
                                                     fontSize: "64px", 
                                                     fontWeight: "bold", 
-                                                    color: adherencePercentage > 70 ? "#10ad73" : adherencePercentage > 40 ? "#ffcc00" : "#ff4d4d"
+                                                    color: "black"
                                                 }}>
                                                     {adherencePercentage.toFixed(2)}%
                                                 </div>
@@ -1706,44 +1747,117 @@ const adherencePercentage = calculateWeightedAdherence(filesInfo);
                                             </div>
                                     </div>
                                 </div>
-                                <div style={{display: "flex", flexDirection: "column", width: "100%", marginBottom:"10px",marginTop:"10px"}}>
-                                    <div style={{width: "100%", display: 'flex',flexDirection: "column",paddingRight: "10px", border: "2px solid #d8d8d8",background:"white", padding: "5px 15px 15px 15px",marginRight:"10px", borderRadius: "12px 12px 12px 12px",lineHeight: "1.5714285714285714"}}>
-                                   {filesToDisplay
-                                    .filter(file => file.modelType === "Process Collaboration" && file.isValid)
-                                    .map((file, index) => {
-                                        // Cálculo individual da aderência
-                                        let individualWeightedScore = 0;
-                                        g.forEach((guidelineId, idx) => {
-                                            const value = file.guidelineMap[guidelineId];
-                                            if (value === true || value === "true") {
-                                                individualWeightedScore += weight[idx];
-                                            }
-                                        });
-                                        const individualPercentage = (individualWeightedScore / totalPossibleWeight) * 100;
+                              <div style={{ display: "flex", flexDirection: "column", width: "100%", marginBottom: "10px", marginTop: "10px" }}>
+                                <div style={{
+                                    width: "100%",
+                                    display: 'flex',
+                                    flexDirection: "column",
+                                    border: "2px solid #d8d8d8",
+                                    background: "white",
+                                    padding: "15px",
+                                    borderRadius: "12px",
+                                }}>
+                                    {/* CONTAINER DE SCROLL UNIFICADO */}
+                                    <div style={{ 
+                                        width: "100%", 
+                                        maxHeight: "500px", 
+                                        overflow: "auto", 
+                                        border: "1px solid rgba(0,0,0,0.1)",
+                                        borderRadius: "8px"
+                                    }} className="custom-scroll">
+                                        
+                                        {/* CABEÇALHO FIXO */}
+                                        <div style={{ 
+                                            display: "flex", 
+                                            background: "#f8f9fa", 
+                                            borderBottom: "2px solid #eee", 
+                                            padding: "10px 0", 
+                                            minWidth: "max-content",
+                                            position: "sticky",
+                                            top: 0,
+                                            zIndex: 10
+                                        }}>
+                                            {/* Parte Fixa do Cabeçalho */}
+                                            <div style={{ 
+                                                width: "320px", 
+                                                minWidth: "320px", 
+                                                paddingLeft: "15px", 
+                                                fontWeight: "bold", 
+                                                fontSize: "14px",
+                                                position: "sticky",
+                                                left: 0,
+                                                background: "#f8f9fa",
+                                                borderRight: "2px solid #eee", // Separação visual da parte fixa
+                                                zIndex: 11
+                                            }}>
+                                                Model Name & Adherence
+                                            </div>
+                                            {/* Parte que Rola do Cabeçalho */}
+                                            <div style={{ display: "flex" }}>
+                                                {g.map(id => (
+                                                    <div key={id} style={{ width: "40px", textAlign: "center", fontSize: "10px", fontWeight: "bold", color: "#666" }}>
+                                                        {id}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
 
-                                        return (
-                                            <div key={index} style={{ border: "2px solid rgba(0, 0, 0, 0.05)", borderRadius: "8px", marginBottom: "8px", background: "white" }}>
-                                                
-                                                <div className="file-block-wrapper">
-                                                    
-                                                    {/* 1. Seção do Nome e Porcentagem (Tudo na mesma linha) */}
-                                                    <div className="file-name-section">
-                                                        <div style={{ display: "flex", alignItems: "center", width: "100%", overflow: "hidden" }}>
-                                                            
-                                                            {/* Ícone */}
-                                                            <BsDiagram2 size={16} style={{ flexShrink: 0, marginRight: "8px" }} />
-                                                            
-                                                            {/* Nome do Arquivo (Ocupa o espaço disponível e trunca se necessário) */}
-                                                            <span title={file.name} className="file-name-text" style={{ flex: 1, marginRight: "8px" }}>
+                                        {/* LISTA DE ARQUIVOS */}
+                                        {filesToDisplay
+                                            .filter(file => file.modelType === "Process Collaboration" && file.isValid)
+                                            .map((file, index) => {
+                                                // Cálculo da aderência individual
+                                                let individualWeightedScore = 0;
+                                                g.forEach((guidelineId, idx) => {
+                                                    const value = file.guidelineMap[guidelineId];
+                                                    if (value === true || value === "true") {
+                                                        individualWeightedScore += weight[idx];
+                                                    }
+                                                });
+                                                const individualPercentage = (individualWeightedScore / totalPossibleWeight) * 100;
+
+                                                return (
+                                                    <div key={index} style={{ 
+                                                        display: "flex", 
+                                                        alignItems: "center", 
+                                                        padding: "0", 
+                                                        borderBottom: "1px solid #eee",
+                                                        minWidth: "max-content",
+                                                        background: "white"
+                                                    }}>
+                                                        {/* NOME E ADERÊNCIA FIXOS À ESQUERDA */}
+                                                        <div style={{ 
+                                                            width: "320px", 
+                                                            minWidth: "320px", 
+                                                            height: "45px",
+                                                            display: "flex", 
+                                                            alignItems: "center", 
+                                                            paddingLeft: "15px",
+                                                            position: "sticky", 
+                                                            left: 0, 
+                                                            background: "white",
+                                                            borderRight: "2px solid #eee", // Alinhado com o cabeçalho
+                                                            zIndex: 5
+                                                        }}>
+                                                            <BsDiagram2 size={14} style={{ marginRight: "10px", flexShrink: 0 }} />
+                                                            <span 
+                                                                title={file.name} 
+                                                                style={{ 
+                                                                    width: "180px", // Largura fixa para o texto
+                                                                    whiteSpace: "nowrap", 
+                                                                    overflow: "hidden", 
+                                                                    textOverflow: "ellipsis", 
+                                                                    fontSize: "12px",
+                                                                    marginRight: "8px"
+                                                                }}
+                                                            >
                                                                 {file.name}
                                                             </span>
-                                                            
-                                                            {/* Badge da Porcentagem (Somente o número) */}
                                                             <span style={{
-                                                                fontSize: "11px",
+                                                                fontSize: "9px",
                                                                 backgroundColor: individualPercentage >= 50 ? "#10ad73" : "#e63946",
                                                                 color: "white",
-                                                                padding: "1px 6px",
+                                                                padding: "1px 5px",
                                                                 borderRadius: "10px",
                                                                 fontWeight: "bold",
                                                                 flexShrink: 0
@@ -1751,41 +1865,34 @@ const adherencePercentage = calculateWeightedAdherence(filesInfo);
                                                                 {individualPercentage.toFixed(0)}%
                                                             </span>
                                                         </div>
+
+                                                        {/* ÍCONES DAS DIRETRIZES (MENORES E ALINHADOS) */}
+                                                        <div style={{ display: "flex" }}>
+                                                            {g.map((guidelineId) => {
+                                                                const value = file.guidelineMap[guidelineId];
+                                                                const isTrue = value === true || value === "true";
+
+                                                                return (
+                                                                    <div key={guidelineId} style={{ width: "40px", height: "45px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                                                        <span 
+                                                                            style={{ 
+                                                                                fontSize: "14px", // Ícones diminuídos
+                                                                                color: isTrue ? "#10ad73" : "#e63946",
+                                                                                display: "flex"
+                                                                            }}
+                                                                        >
+                                                                            {isTrue ? <GiConfirmed /> : <AiFillExclamationCircle />}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
-
-                                                    {/* 2. Seção de Rolagem das Diretrizes (Permanece igual) */}
-                                                    <div className="guidelines-scroll-container custom-scroll">
-                                                        {g.map((guidelineId) => {
-                                                            const value = file.guidelineMap[guidelineId];
-                                                            const isTrue = value === true || value === "true";
-
-                                                            return (
-                                                                <div key={guidelineId} className="guideline-column">
-                                                                    <span className="guideline-label">
-                                                                        {guidelineId}
-                                                                    </span>
-                                                                    <span 
-                                                                        className={`badge badge-pill ${isTrue ? 'Valid' : 'Invalid'}`}
-                                                                        style={{ 
-                                                                            padding: "4px", 
-                                                                            display: "flex", 
-                                                                            justifyContent: "center",
-                                                                            minWidth: "24px"
-                                                                        }}
-                                                                    >
-                                                                        {isTrue ? <GiConfirmed /> : <AiFillExclamationCircle />}
-                                                                    </span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                }
-                                   </div>
+                                                );
+                                            })
+                                        }
+                                    </div>
+                                </div>
                                     <button style={{ background: 'white', color: '#10ad73', fontSize: '14px', padding: '10px 10px', cursor: 'pointer', marginTop: '0.42cm' }}  onClick={downloadGMFile}>
                                         <GrDocumentCsv /><a style={{ marginRight: '0.5em', color: '#10ad73', marginLeft: '8px' }}>Download Good Modeling Practice report</a>
                                     </button>

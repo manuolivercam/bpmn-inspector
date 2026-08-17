@@ -1,5 +1,4 @@
-# Embedding prioritized guidelines in BPMN verification to improve model clarity (Iniciação Científica)
-
+# Embedding prioritized guidelines in BPMN verification to improve model clarity 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java">
   <img src="https://img.shields.io/badge/BPMN-2.0-blue?style=for-the-badge" alt="BPMN">
@@ -7,7 +6,7 @@
   <img src="https://img.shields.io/badge/AI%20Assisted-Development-purple?style=for-the-badge" alt="Suporte de IA">
 </p>
 
-Bem-vindo(a) ao repositório que detalha o meu projeto de Iniciação Científica (IC) desenvolvido como Aluna Pesquisadora na **Universidade de São Paulo (USP)**.l.
+Bem-vindo(a) ao repositório que detalha o meu projeto de Iniciação Científica (IC) desenvolvido como Aluna Pesquisadora na **Universidade de São Paulo (USP)**.
 
 ## 📌 Sobre o Projeto
 
